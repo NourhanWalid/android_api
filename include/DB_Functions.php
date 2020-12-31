@@ -1,9 +1,6 @@
 <?php
  
-/**
- * @author Ravi Tamada
- * @link https://www.androidhive.info/2012/01/android-login-and-registration-with-php-mysql-and-sqlite/ Complete tutorial
- */
+
  
 class DB_Functions {
  
@@ -103,6 +100,26 @@ class DB_Functions {
             return false;
         }
     }
+
+    public function isSavedShopExisted($email,$shop_name,$product_name) {
+        $stmt = $this->conn->prepare("SELECT email, shop_name, product_name from save_shop WHERE email = ? AND shop_name= ? AND product_name = ? ");
+ 
+        $stmt->bind_param("sss", $email,$shop_name,$product_name);
+ 
+        $stmt->execute();
+ 
+        $stmt->store_result();
+ 
+        if ($stmt->num_rows > 0) {
+            // user existed 
+            $stmt->close();
+            return true;
+        } else {
+            // user not existed
+            $stmt->close();
+            return false;
+        }
+    }
  
     /**
      * Encrypting password
@@ -128,6 +145,31 @@ class DB_Functions {
         $hash = base64_encode(sha1($password . $salt, true) . $salt);
  
         return $hash;
+    }
+
+
+
+    public function saveShop($email, $shop_name,$product_name,$price,$special_offers) {
+        $uuid = uniqid('', true);
+        $stmt = $this->conn->prepare("INSERT INTO save_shop(email, shop_name,product_name,price,special_offers) VALUES(?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssis", $email, $shop_name,$product_name,$price,$special_offers);
+        $result = $stmt->execute();
+        $stmt->close();
+
+        // check for successful store
+        if ($result) {
+            $stmt = $this->conn->prepare("SELECT * FROM save_shop WHERE email = ? AND shop_name=? AND product_name=?");
+            $stmt->bind_param("sss", $email, $shop_name,$product_name);
+            $stmt->execute();
+            $shop = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+ 
+            return $shop;
+        } else {
+            return FALSE ;
+        }
+
+       
     }
  
 }
